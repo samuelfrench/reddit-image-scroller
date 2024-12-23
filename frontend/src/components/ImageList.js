@@ -1,5 +1,4 @@
-// filepath: /home/sam/reddit-image-scroller/frontend/src/components/ImageList.js
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import './ImageList.css';
 
 const ImageList = () => {
@@ -8,6 +7,8 @@ const ImageList = () => {
   const [error, setError] = useState(null);
   const [after, setAfter] = useState(null);
   const [fetching, setFetching] = useState(false);
+  const scrollRef = useRef(null);
+  const [batchLoaded, setBatchLoaded] = useState(false);
 
   const API_URL = process.env.REACT_APP_API_URL;
 
@@ -19,8 +20,16 @@ const ImageList = () => {
       const imageUrls = data.data.children
         .map(child => child.data.url)
         .filter(url => /\.(jpg|jpeg|png|gif)$/.test(url));
+
       setImages(prevImages => [...prevImages, ...imageUrls]);
-      setAfter(data.data.after);
+
+      // Delay updating "after" until the current batch is fully scrolled through
+      if (imageUrls.length > 0) {
+        setBatchLoaded(false); // Mark batch as not fully scrolled
+        scrollRef.current = data.data.after; // Store the next "after" temporarily
+      } else {
+        setAfter(null); // No more data to fetch
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -28,6 +37,20 @@ const ImageList = () => {
       setFetching(false);
     }
   }, [after, API_URL]);
+
+  const handleScroll = useCallback(() => {
+    if (!batchLoaded && window.innerHeight + window.scrollY >= document.body.offsetHeight - 100) {
+      setAfter(scrollRef.current); // Update "after" when scrolled to the bottom
+      setBatchLoaded(true); // Mark the batch as fully scrolled
+    }
+  }, [batchLoaded]);
+
+  useEffect(() => {
+    window.addEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [handleScroll]);
 
   useEffect(() => {
     fetchImages();

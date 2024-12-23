@@ -62,7 +62,9 @@ const ImageList = () => {
       {error && <p>Error: {error}</p>}
       <div className="images">
         {images.map((url, index) => (
-          <img key={index} src={url} alt={`Image ${index}`} />
+          <div key={index} className="image-container">
+            <img src={url} alt={`Image ${index}`} />
+          </div>
         ))}
       </div>
       {!fetching && after && (

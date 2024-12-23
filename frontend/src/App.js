@@ -6,7 +6,7 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <h1>Reddit Image Scraper</h1>
+        <h1>Reddit Image Scroller</h1>
       </header>
       <ImageList />
     </div>
